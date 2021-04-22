@@ -231,12 +231,19 @@ function calculate_total_price(hotel){
 //*************************************************************
 //*************************************************************
 
-function compare_pack_table(){
-    const packs = await Pack.findAll({      //Falta por acabar esta funcion que comprueba que en la tabla existen packs que se ajustan a los campos especificados
-        where : {
-
+async function compare_pack_table(){
+    const packs_table = await Pack.findAll();
+    for (var i=0;i<packs_table.length;i++){
+        var transport=packs_table[i].transport;
+        var split = transport.split(" ");
+        for(var z=0;z<split.length;z++){
+            if(split[z]=="from"){
+                if(split[z+1]==destiny){
+                        packs.push(packs_table[i]);
+                }
+            }
         }
-    });
+    }
 }
 async function main(){
     initiate_table();
@@ -245,6 +252,7 @@ async function main(){
    // await get_module_acco_acti_info();
    // save_pack(packs[0]);
     show_packs();
+    compare_pack_table()
     //show_transport()
    // show_accomodation()
     //show_activity()
