@@ -40,26 +40,36 @@ initiate_ids = (place) => {
 
     function promesa_id() {
         return new Promise((resolve, reject) => {
-            const req = http.request(options, function (res) {
-                const chunks = [];
+            try {
+                const req = http.request(options, function (res) {
+                    const chunks = [];
 
-                res.on("data", function (chunk) {
-                    chunks.push(chunk);
-                });
+                    res.on("data", function (chunk) {
+                        chunks.push(chunk);
+                    });
 
-                res.on("end", function () {
-                    const body = Buffer.concat(chunks);
-                    resultado_id = body.toString();
-                    resolve(get_place_id());
+                    res.on("end", function () {
+                        const body = Buffer.concat(chunks);
+                        resultado_id = body.toString();
+                        resolve(get_place_id());
+                    });
                 });
-            });
-            req.end();
+                req.end();
+            }catch (error){
+                throw error;
+            }
         });
     }
 
     function get_place() {
         var path = "/apiservices/autosuggest/v1.0/US/USD/en-US/?query=";
-        path += place_to_search;
+
+        if((place_to_search==undefined)||(typeof place_to_search != String)){
+            throw "Error: place_to_search is not defined!"
+        }
+        else {
+            path += place_to_search;
+        }
         return path;
     }
 
@@ -119,25 +129,37 @@ initiate_tra = (id_origin,id_destiny,check_in,check_out) => {
         var ci = check_in;
         var co = check_out;
 
-        return path += id_origin +"/" + id_destiny + "/" + ci + "?" + "inboundpartialdate=" + co;
+        if((ci==undefined)|| (typeof ci !=String)){
+            throw "Error:check_in_date is not defined!"
+        }
+        if((co==undefined)|| (typeof co !=String)){
+            throw "Error:check_out_date is not defined!"
+        }
+        else {
+            return path += id_origin + "/" + id_destiny + "/" + ci + "?" + "inboundpartialdate=" + co;
+        }
     }
 
     function promesa_tra() {
         return new Promise((resolve, reject) => {
-            const req = http.request(options, function (res) {
-                const chunks = [];
+            try {
+                const req = http.request(options, function (res) {
+                    const chunks = [];
 
-                res.on("data", function (chunk) {
-                    chunks.push(chunk);
-                });
+                    res.on("data", function (chunk) {
+                        chunks.push(chunk);
+                    });
 
-                res.on("end", function () {
-                    const body = Buffer.concat(chunks);
-                    resultado = body.toString();
-                    resolve(get_transport_info());
+                    res.on("end", function () {
+                        const body = Buffer.concat(chunks);
+                        resultado = body.toString();
+                        resolve(get_transport_info());
+                    });
                 });
-            });
-            req.end();
+                req.end();
+            }catch (error){
+                throw error;
+            }
         });
     }
 
@@ -265,18 +287,15 @@ initiate_tra = (id_origin,id_destiny,check_in,check_out) => {
 }
 
 exports.get_trans_pack= async (origin,destiny,check_in_date,check_out_date)  => {
-    var id_destiny = await initiate_ids(origin);
-    var id_origin = await initiate_ids(destiny);
-    //console.log("CREANDO OPCION DE TRANSPORTE...");
-    //console.log("*******************************");
-   // console.log("***Destino: " + id_destiny + "***");
-   // console.log("***Origen: " + id_origin+ "***");
+    try {
+        var id_destiny = await initiate_ids(origin);
+        var id_origin = await initiate_ids(destiny);
 
-    var tran_info = await initiate_tra(id_origin, id_destiny, check_in_date, check_out_date);
-    transport = tran_info;
-   // console.log("****Informacion del Vuelo****")
-    //console.log(tran_info);
-    //console.log("*****************************")
+        var tran_info = await initiate_tra(id_origin, id_destiny, check_in_date, check_out_date);
+        transport = tran_info;
+    }catch (error){
+        throw error;
+    }
 }
 
 
