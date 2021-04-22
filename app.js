@@ -8,11 +8,11 @@ var interested_places;
 var flight;
 var packs = [];
 
-var origin ="Madrid";
-var destiny="London";
-var adults=1;
-var check_in_date="2021-05-10";
-var check_out_date="2021-05-15";
+var origin =process.argv[2];
+var destiny=process.argv[3];
+var adults=parseInt(process.argv[4]);
+var check_in_date=process.argv[5];
+var check_out_date=process.argv[6];
 
 
 async function initiate_table(){
@@ -29,31 +29,31 @@ function check_variables_search(){
     if(origin==undefined){
         throw ("Error: origin is undefined, which means that the search wont be properly performanced");
     }
-    if(typeof origin != String ){
+    if(typeof origin != "string" ){
         throw ("Error: origin is not a String, which means that the search wont be properly performanced");
     }
     if(destiny==undefined){
         throw ("Error: destiny is undefined, which means that the search wont be properly performanced");
     }
-    if(typeof destiny != String ){
+    if(typeof destiny != "string" ){
         throw ("Error: destiny is not a String, which means that the search wont be properly performanced");
     }
     if(adults==undefined){
         throw ("Error: adults is undefined, which means that the search wont be properly performanced");
     }
-    if(typeof adults != Number ){
+    if(typeof adults != "number" ){
         throw ("Error: destiny is not a number, which means that the search wont be properly performanced");
     }
     if(check_in_date == undefined){
         throw ("Error: check_in_date is undefined, which means that the search wont be properly performanced");
     }
-    if(typeof check_in_date != String ){
+    if(typeof check_in_date != "string" ){
         throw ("Error: check_in_date is not a String, which means that the search wont be properly performanced");
     }
-    if(check_out_date_date == undefined){
+    if(check_out_date == undefined){
         throw ("Error: check_out_date is undefined, which means that the search wont be properly performanced");
     }
-    if(typeof check_out_date != String ){
+    if(typeof check_out_date != "string" ){
         throw ("Error: check_out_date is not a String, which means that the search wont be properly performanced");
     }
 }
@@ -62,7 +62,7 @@ function check_hotel_Integrity(){
     if(hotels == undefined){
         throw ("Error: hotels is undefined, which means that packs can´t be offered");
     }
-    if(typeof hotels != Array){
+    if(typeof hotels != "object"){
         throw ("Error: hotels type not an array. Unexpected behaviour");
     }
 }
@@ -71,7 +71,7 @@ function check_interested_places_Integrity() {
     if (interested_places == undefined) {
         throw ("Error: interested_places is undefined, which means that packs can´t be offered");
     }
-    if (typeof interested_places != Array) {
+    if (typeof interested_places != "array") {
         throw ("Error: interested_places type not an array. Unexpected behaviour");
     }
 }
@@ -80,7 +80,7 @@ function check_flight_Integrity(){
     if (flight == undefined) {
         throw ("Error: flight is undefined, which means that packs can´t be offered");
     }
-    if (typeof flight != Object) {
+    if (typeof flight != "object") {
         throw ("Error: flight type not an object. Unexpected behaviour");
     }
 }
@@ -281,13 +281,11 @@ async function show_activity(){
 //*************************************************************
 
 async function get_module_acco_acti_info() {
-    try {
         check_variables_search();
         await modulo_acco_acti.get_acco_pack(destiny, adults, check_in_date, check_out_date);
         await modulo_transporte.get_trans_pack(origin, destiny, check_in_date, check_out_date);
-    }catch (error){
-        console.error(error);
-    }
+        //console.error(error);
+
 
     hotels = modulo_acco_acti.get_hotels();
     interested_places = modulo_acco_acti.get_interest();
@@ -348,13 +346,13 @@ async function compare_pack_table(){
     }
 }
 async function main(){
-    initiate_table();
-//create_user();
-//erase_user(4);
-   // await get_module_acco_acti_info();
-   // save_pack(packs[0]);
+    //initiate_table();
+    //create_user();
+    //erase_user(4);
+    await get_module_acco_acti_info();
+    save_pack(packs[3]);
     show_packs();
-    compare_pack_table()
+    //compare_pack_table()
     //show_transport()
    // show_accomodation()
     //show_activity()

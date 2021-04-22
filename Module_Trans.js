@@ -64,7 +64,7 @@ initiate_ids = (place) => {
     function get_place() {
         var path = "/apiservices/autosuggest/v1.0/US/USD/en-US/?query=";
 
-        if((place_to_search==undefined)||(typeof place_to_search != String)){
+        if((place_to_search==undefined)||(typeof place_to_search != "string")){
             throw "Error: place_to_search is not defined!"
         }
         else {
@@ -129,10 +129,10 @@ initiate_tra = (id_origin,id_destiny,check_in,check_out) => {
         var ci = check_in;
         var co = check_out;
 
-        if((ci==undefined)|| (typeof ci !=String)){
+        if((ci==undefined)|| (typeof ci !="string")){
             throw "Error:check_in_date is not defined!"
         }
-        if((co==undefined)|| (typeof co !=String)){
+        if((co==undefined)|| (typeof co !="string")){
             throw "Error:check_out_date is not defined!"
         }
         else {

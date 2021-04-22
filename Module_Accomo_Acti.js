@@ -24,7 +24,7 @@ function initiate_ids(place){
         "port": null,
         "path": get_place(),
         "headers": {
-            "x-rapidapi-key": "f1437027d0msh29390ccc3de5e5ep17f081jsndb3b1a2bd225",
+            "x-rapidapi-key": "858da3dc02msh1e03a336bf83c0dp1a68e9jsn98e3930b0422",
             "x-rapidapi-host": "hotels-com-provider.p.rapidapi.com",
             "useQueryString": true
         }
@@ -56,7 +56,7 @@ function initiate_ids(place){
 
     function get_place() {
         var path = "/v1/destinations/search?locale=en_US&currency=USD&query=";
-        if((place_to_search == undefined)||(typeof place_to_search != String)){
+        if((place_to_search == undefined)||(typeof place_to_search != "string")){
             throw "Error:place_to_search is not defined!"
         }
         else {
@@ -201,7 +201,7 @@ function initiate_hotel(adults,ci,co,dest_id,sort_order){
         "port": null,
         "path": get_place(),
         "headers": {
-            "x-rapidapi-key": "f1437027d0msh29390ccc3de5e5ep17f081jsndb3b1a2bd225",
+            "x-rapidapi-key": "858da3dc02msh1e03a336bf83c0dp1a68e9jsn98e3930b0422",
             "x-rapidapi-host": "hotels-com-provider.p.rapidapi.com",
             "useQueryString": true
         }
@@ -232,19 +232,19 @@ function initiate_hotel(adults,ci,co,dest_id,sort_order){
     function get_place() {
         var path = "/v1/hotels/search?adults_number="
 
-        if((adults == undefined) ||(typeof adults != Number)){
+        if((adults == undefined) ||(typeof adults != "number")){
             throw "Error: adults is not properly defined!"
         }
-        if((ci == undefined) ||(typeof ci != String)){
+        if((ci == undefined) ||(typeof ci != "string")){
             throw "Error: ci is not properly defined!"
         }
-        if((co == undefined) ||(typeof co != String)){
+        if((co == undefined) ||(typeof co != "string")){
             throw "Error: co is not properly defined!"
         }
-        if((dest_id == undefined) ||(typeof dest_id != String)){
+        if((dest_id == undefined) ||(typeof dest_id != "string")){
             throw "Error: dest_id is not properly defined!"
         }
-        if((sort_order == undefined) ||(typeof sort_order != String)){
+        if((sort_order == undefined) ||(typeof sort_order != "string")){
             throw "Error: sort_order is not properly defined!"
         }
 
