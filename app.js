@@ -21,53 +21,138 @@ async function initiate_table(){
 
 //*************************************************************
 //*************************************************************
+//*******FUNCIONES PARA COMPROBAR INTEGRIDAD DE VARIABLES******
+//*************************************************************
+//*************************************************************
+
+function check_variables_search(){
+    if(origin==undefined){
+        throw ("Error: origin is undefined, which means that the search wont be properly performanced");
+    }
+    if(typeof origin != String ){
+        throw ("Error: origin is not a String, which means that the search wont be properly performanced");
+    }
+    if(destiny==undefined){
+        throw ("Error: destiny is undefined, which means that the search wont be properly performanced");
+    }
+    if(typeof destiny != String ){
+        throw ("Error: destiny is not a String, which means that the search wont be properly performanced");
+    }
+    if(adults==undefined){
+        throw ("Error: adults is undefined, which means that the search wont be properly performanced");
+    }
+    if(typeof adults != Number ){
+        throw ("Error: destiny is not a number, which means that the search wont be properly performanced");
+    }
+    if(check_in_date == undefined){
+        throw ("Error: check_in_date is undefined, which means that the search wont be properly performanced");
+    }
+    if(typeof check_in_date != String ){
+        throw ("Error: check_in_date is not a String, which means that the search wont be properly performanced");
+    }
+    if(check_out_date_date == undefined){
+        throw ("Error: check_out_date is undefined, which means that the search wont be properly performanced");
+    }
+    if(typeof check_out_date != String ){
+        throw ("Error: check_out_date is not a String, which means that the search wont be properly performanced");
+    }
+}
+
+function check_hotel_Integrity(){
+    if(hotels == undefined){
+        throw ("Error: hotels is undefined, which means that packs can´t be offered");
+    }
+    if(typeof hotels != Array){
+        throw ("Error: hotels type not an array. Unexpected behaviour");
+    }
+}
+
+function check_interested_places_Integrity() {
+    if (interested_places == undefined) {
+        throw ("Error: interested_places is undefined, which means that packs can´t be offered");
+    }
+    if (typeof interested_places != Array) {
+        throw ("Error: interested_places type not an array. Unexpected behaviour");
+    }
+}
+
+function check_flight_Integrity(){
+    if (flight == undefined) {
+        throw ("Error: flight is undefined, which means that packs can´t be offered");
+    }
+    if (typeof flight != Object) {
+        throw ("Error: flight type not an object. Unexpected behaviour");
+    }
+}
+//*************************************************************
+//*************************************************************
 //**************FUNCIONES PARA ELIMINAR************************
 //*************************************************************
 //*************************************************************
 
 function erase_user(ID){
-    Personas.destroy({
-        where: {
-            id: ID
-        },
-        force: true
-    })
+    try {
+        Personas.destroy({
+            where: {
+                id: ID
+            },
+            force: true
+        })
+    }catch (error){
+        console.log(erro);
+    }
 }
 
 function erase_pack(ID){
+    try {
     Pack.destroy({
         where: {
             id: ID
         },
         force: true
     })
+    }catch (error){
+        console.log(erro);
+    }
 }
 
 function erase_accomodation(ID){
+    try {
     Accomodation.destroy({
         where: {
             id: ID
         },
         force: true
     })
+    }catch (error){
+        console.log(erro);
+    }
 }
 
 function erase_transport(ID){
+    try {
     Transporte.destroy({
         where: {
             id: ID
         },
         force: true
     })
+    }catch (error){
+        console.log(erro);
+    }
 }
 
 function erase_activity(ID){
+    try {
     Activity.destroy({
         where: {
             id: ID
         },
         force: true
     })
+    }catch (error){
+        console.log(erro);
+    }
 }
 
 //*************************************************************
@@ -75,6 +160,7 @@ function erase_activity(ID){
 //*************************************************************
 
 async function create_user(){
+    try {
     const persona = Personas.create({
         admin: true,
         email: 'jesuselmister99@gmail.com',
@@ -86,6 +172,9 @@ async function create_user(){
         lastSeen: new Date(),
         comments: 21
     })
+    }catch (error){
+        console.log(erro);
+    }
 }
 //*************************************************************
 //*************************************************************
@@ -192,12 +281,25 @@ async function show_activity(){
 //*************************************************************
 
 async function get_module_acco_acti_info() {
-    await modulo_acco_acti.get_acco_pack(destiny,adults,check_in_date,check_out_date);
-    await modulo_transporte.get_trans_pack(origin,destiny,check_in_date,check_out_date);
+    try {
+        check_variables_search();
+        await modulo_acco_acti.get_acco_pack(destiny, adults, check_in_date, check_out_date);
+        await modulo_transporte.get_trans_pack(origin, destiny, check_in_date, check_out_date);
+    }catch (error){
+        console.error(error);
+    }
 
     hotels = modulo_acco_acti.get_hotels();
     interested_places = modulo_acco_acti.get_interest();
     flight = await modulo_transporte.get_transport();
+
+    try {
+        check_hotel_Integrity()
+        check_flight_Integrity()
+        check_interested_places_Integrity()
+    }catch (error){
+        console.error(error);
+    }
 
     for(var i=0;i<hotels.length;i++){
         create_pack(hotels[i]);

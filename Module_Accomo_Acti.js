@@ -32,27 +32,36 @@ function initiate_ids(place){
 
     function promesa_id() {
         return new Promise((resolve, reject) => {
-            const req = http.request(options, function (res) {
-                const chunks = [];
+            try {
+                const req = http.request(options, function (res) {
+                    const chunks = [];
 
-                res.on("data", function (chunk) {
-                    chunks.push(chunk);
-                });
+                    res.on("data", function (chunk) {
+                        chunks.push(chunk);
+                    });
 
-                res.on("end", function () {
-                    const body = Buffer.concat(chunks);
-                    resultado_id = body.toString();
-                    get_intersting_places();
-                    resolve(get_place_id());
+                    res.on("end", function () {
+                        const body = Buffer.concat(chunks);
+                        resultado_id = body.toString();
+                        get_intersting_places();
+                        resolve(get_place_id());
+                    });
                 });
-            });
-            req.end();
+                req.end();
+            }catch (error){
+                throw error;
+            }
         });
     }
 
     function get_place() {
         var path = "/v1/destinations/search?locale=en_US&currency=USD&query=";
-        path += place_to_search;
+        if((place_to_search == undefined)||(typeof place_to_search != String)){
+            throw "Error:place_to_search is not defined!"
+        }
+        else {
+            path += place_to_search;
+        }
         return path;
     }
 
@@ -200,24 +209,45 @@ function initiate_hotel(adults,ci,co,dest_id,sort_order){
 
     function promesa_hotel() {
         return new Promise((resolve, reject) => {
-            const req = http.request(options, function (res) {
-                const chunks = [];
+            try {
+                const req = http.request(options, function (res) {
+                    const chunks = [];
 
-                res.on("data", function (chunk) {
-                    chunks.push(chunk);
-                });
+                    res.on("data", function (chunk) {
+                        chunks.push(chunk);
+                    });
 
-                res.on("end", function () {
-                    const body = Buffer.concat(chunks);
-                    resultado_hoteles = body.toString();
-                    resolve(get_hotels_info());
+                    res.on("end", function () {
+                        const body = Buffer.concat(chunks);
+                        resultado_hoteles = body.toString();
+                        resolve(get_hotels_info());
+                    });
                 });
-            });
-            req.end();
+                req.end();
+            }catch (error){
+                throw error;
+            }
         });
     }
     function get_place() {
-        var path = "/v1/hotels/search?adults_number="//"/v1/hotels/search?adults_number=1&checkin_date=2022-03-26&destination_id=1708350&checkout_date=2022-03-27&currency=USD&locale=en_US&sort_order=STAR_RATING_HIGHEST_FIRST";
+        var path = "/v1/hotels/search?adults_number="
+
+        if((adults == undefined) ||(typeof adults != Number)){
+            throw "Error: adults is not properly defined!"
+        }
+        if((ci == undefined) ||(typeof ci != String)){
+            throw "Error: ci is not properly defined!"
+        }
+        if((co == undefined) ||(typeof co != String)){
+            throw "Error: co is not properly defined!"
+        }
+        if((dest_id == undefined) ||(typeof dest_id != String)){
+            throw "Error: dest_id is not properly defined!"
+        }
+        if((sort_order == undefined) ||(typeof sort_order != String)){
+            throw "Error: sort_order is not properly defined!"
+        }
+
         path += adults +"&checkin_date="+ci+"&destination_id="+dest_id+"&checkout_date="+co+"&currency=USD&locale=en_US&sort_order="+sort_order;
         return path;
     }
@@ -340,8 +370,12 @@ function initiate_hotel(adults,ci,co,dest_id,sort_order){
 }
 
 exports.get_acco_pack = async (place,adults,ci,co) => {
-    var id_destiny = await initiate_ids(place);
-    resultado_hoteles = await initiate_hotel(adults,ci, co, id_destiny, "GUEST_RATING");
+    try {
+        var id_destiny = await initiate_ids(place);
+        resultado_hoteles = await initiate_hotel(adults, ci, co, id_destiny, "GUEST_RATING");
+    }catch (error){
+        throw error;
+    }
 }
 
 exports.get_hotels =  () =>{
