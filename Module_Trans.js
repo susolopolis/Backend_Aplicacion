@@ -1,10 +1,22 @@
+/**
+ * @apiName Modulo de Obtencion del Transporte
+ * Modulo para Obtención del Transporte del Paquete.
+ *
+ * Este modulo se encargará de obtener los identificadores usados por la API SkyScanner para,
+ * posteriormente, realizar la búsqueda en la misma con los parámetros recibidos. Inicializará
+ * el objeto correspondiente y permitirá que otros módulos accedan a su información.
+ *
+ * @Author Jesus Navarro Hernandez
+ * @date 23/04/2021
+ */
 
 const http = require("https");
 
-var resultado_id;
-var resultado;
+var resultado_id; //!< Variable para almacenar el resultado de la peticion de cara a obtener los IDs
 
-var place_to_search;
+var resultado; //!< Variable para almacenar el resultado de la peticion de transporte
+
+var place_to_search;//!< Variable para almacenar el lugar a buscar
 
 var transport = {
     minPrice : String,
@@ -17,16 +29,27 @@ var transport = {
     Country_Destination: String,
     City_Origin: String,
     City_Destination: String
-};
+};  //!< Variable donde guardaremos el resultado total del vuelo para poder usarlo en la aplicacion
 
-var counter = 0;
-var counter_2 =0;
-var counter_3 = 0;
+var counter = 0;//!< Usaremos estos contadores mas adelante como limites de parada
+var counter_2 =0;//!< Usaremos estos contadores mas adelante como limites de parada
+var counter_3 = 0;//!< Usaremos estos contadores mas adelante como limites de parada
 
+//*************************************************************
+//*************************************************************
+//**********FUNCION PARA OBTENER EL ID DE UN LUGAR*************
+//*************************************************************
+//*************************************************************
+
+/**
+ * @brief Funcion para obtener el ID necesario de un lugar
+ * @param place lugar cuyo ID deseamos obtener
+ * @return resultado_id Identificador usado por la API asociado el lugar, si existe.
+ */
 
 initiate_ids = (place) => {
-    place_to_search = place;
-    const options = {
+    place_to_search = place; //!< Variable para almacenar el valor del lugar a buscar
+    const options = {       //variable para realizar la peticion, aportada por la API
         "method": "GET",
         "hostname": "skyscanner-skyscanner-flight-search-v1.p.rapidapi.com",
         "port": null,
@@ -37,6 +60,15 @@ initiate_ids = (place) => {
             "useQueryString": true
         }
     };
+/**
+ * Comenzamos definiendo la variable options que contiene la informacion necesaria para la peticion
+ * */
+
+
+    /**
+     * @brief Funcion que devuelve la promesa con el ID resuelto
+     * @return get_place_id().place_id Identificador obtenido.
+     */
 
     function promesa_id() {
         return new Promise((resolve, reject) => {
@@ -60,30 +92,54 @@ initiate_ids = (place) => {
             }
         });
     }
+    /**
+     * @brief Funcion que devuelve el path para la peticion en funcion del lugar
+     * @return path Direccion para realizar la peticion.
+     */
 
     function get_place() {
         var path = "/apiservices/autosuggest/v1.0/US/USD/en-US/?query=";
 
-        if((place_to_search==undefined)||(typeof place_to_search != "string")){
-            throw "Error: place_to_search is not defined!"
-        }
-        else {
-            path += place_to_search;
+        /**
+         * Comprobamos que las variables necesarias estan correctamente inicializadas
+         * */
+
+        try {
+            check_variable(place_to_search);
+        }catch (error){
+            throw error;
         }
         return path;
     }
 
+    /**
+     * @brief Funcion que devuelve el valor identificativo del lugar
+     * @return place_id ID del lugar.
+     */
+
     function get_place_id() {
+        /**
+         * Iteramos sobre la cadena donde se arrojo el resultado.
+         * */
         for (var i = 0; i < resultado_id.length; i++) {
+            /**
+             * Comenzamos la búsqueda al encontrar la primera ", ya que el titulo del campo se encuentra entre comillas
+             * */
             if (resultado_id[i] == "\"") {
-                var partial = "";
+                var partial = ""; //!< Almacenaremos aqui el valor del campo
                 var j = i + 1;
+                /**
+                 * Almacenamos el valor del campo en partial
+                 * */
                 while ((resultado_id[j] != "\"") && (j < resultado_id.length)) {
                     partial += resultado_id[j];
                     j++;
                 }
                 var place_id = "";
                 var place_name = "";
+                /**
+                 * Comparamos si el campo es igual a PlaceId. Si es igual, nos quedamos con el valor del campo.
+                 * */
                 if (partial == "PlaceId") {
                     j = j + 5;
                     while (resultado_id[j] != "\"") {
@@ -95,6 +151,9 @@ initiate_ids = (place) => {
                         place_name += resultado_id[j];
                         j++;
                     }
+                    /**
+                     * Si el valor del campo PlaceName es igual al lugar que estamos buscando, devolvemos el identificador
+                     * */
                     if (place_name == place_to_search) {
                         return place_id;
                     }
@@ -105,14 +164,27 @@ initiate_ids = (place) => {
     }
     return get_res();
 
+    /**
+     * @brief Funcion que que realiza la operacion de llamar a la funcion promesa y devolver el valor de la funcion global
+     * @return resultado_id Valor del identificador.
+     */
+
     async function get_res() {
         resultado_id = await promesa_id();
         return resultado_id;
     }
 }
 
+/**
+ * @brief Funcion que obtiene la informacion de la peticion sobre el vuelo y la almacena en la variable correspondiente transport
+ * @return get_rest.transport Copia de la variable transport.
+ */
+
 initiate_tra = (id_origin,id_destiny,check_in,check_out) => {
-    const options = {
+    /**
+     * Comenzamos definiendo la variable options que contiene la informacion necesaria para la peticion
+     * */
+    const options = {  //variable para realizar la peticion, aportada por la API
         "method": "GET",
         "hostname": "skyscanner-skyscanner-flight-search-v1.p.rapidapi.com",
         "port": null,
@@ -124,21 +196,32 @@ initiate_tra = (id_origin,id_destiny,check_in,check_out) => {
         }
     };
 
+    /**
+     * @brief Funcion que devuelve el path para la peticion
+     * @return path path para la peticion
+     */
+
     function get_path_tra() {
         var path = "/apiservices/browsequotes/v1.0/US/USD/en-US/"; //Por defecto, en ingles y en dolares
         var ci = check_in;
         var co = check_out;
+        /**
+         *
+         * Comprobamos que las variables necesarias estan correctamente inicializadas
+         * */
+        try {
+            check_variable(ci);
+            check_variable(co);
+        }catch (error){
+            throw error;
+        }
 
-        if((ci==undefined)|| (typeof ci !="string")){
-            throw "Error:check_in_date is not defined!"
-        }
-        if((co==undefined)|| (typeof co !="string")){
-            throw "Error:check_out_date is not defined!"
-        }
-        else {
-            return path += id_origin + "/" + id_destiny + "/" + ci + "?" + "inboundpartialdate=" + co;
-        }
+        return path += id_origin + "/" + id_destiny + "/" + ci + "?" + "inboundpartialdate=" + co;
     }
+    /**
+     * @brief Funcion que devuelve la promesa con la informacion del transporte
+     * @return get_transport_info.transport Información del transporte.
+     */
 
     function promesa_tra() {
         return new Promise((resolve, reject) => {
@@ -163,15 +246,30 @@ initiate_tra = (id_origin,id_destiny,check_in,check_out) => {
         });
     }
 
+    /**
+     * @brief Funcion que realiza la operacion de tratar la informacion obtenida en la peticion y obtener la informacion relevante
+     * @return transport Copia del valor de la variable transport.
+     */
+
     function get_transport_info(){
+        /**
+         * Iteramos sobre la cadena con la informacion de la peticion
+         * */
         for (var i = 0; i < resultado.length; i++) {
             if (resultado[i] == "\"") {
-                var partial = "";
+                var partial = "";  //variable para almacenar el valor del campo
                 var j = i + 1;
+                /**
+                 * Nos quedamos con un campo
+                 * */
                 while ((resultado[j] != "\"") && (j < resultado.length)) {
                     partial += resultado[j];
                     j++;
                 }
+                /**
+                 * Con este switch, comprobamos si se trata de alguno de los campos relevantes, en cuyo caso nos quedamos con el valor y
+                 * lo almacenamos en la variable de transport correspondiente
+                 * */
                 switch (partial) {
                     case "MinPrice":
                         j = j + 4;
@@ -280,12 +378,21 @@ initiate_tra = (id_origin,id_destiny,check_in,check_out) => {
     }
     return get_res();
 
+    /**
+     * @brief Funcion que realiza la operacion de llamar a la funcion promesa y devolver el valor de la funcion global
+     * @return transport Valor del transporte.
+     */
     async function get_res() {
         transport = await promesa_tra();
         return transport;
     }
 }
 
+/**
+ * @brief Funcion exportable que se encarga de realizar la distintas tareas: llamar a la funcion de obtencion de ids para
+ * los dos lugares (destino y origen) y una vez obtenidos, llama a la funcion encargada de obtener la informacion, almacenando
+ * la misma en transport
+ */
 exports.get_trans_pack= async (origin,destiny,check_in_date,check_out_date)  => {
     try {
         var id_destiny = await initiate_ids(origin);
@@ -298,7 +405,22 @@ exports.get_trans_pack= async (origin,destiny,check_in_date,check_out_date)  => 
     }
 }
 
+/**
+ * @brief Funcion que se encarga de comprobar que las variables estan correctamente inicializadas, con su tipo string
+ */
+function check_variable(variable){
+    if(variable==undefined) {
+        throw "Error: " +variable+" is not properly defined!"
+    }
+    if(typeof variable !="string"){
+        throw "Error: the variable " +variable + " type is " +typeof variable + " ,not a String!"
+    }
+}
 
+/**
+ * @brief Funcion exportable que devuelve el valor de transporte
+ * @return transport Valor del transporte.
+ */
 exports.get_transport = async ()  => {
     return transport;
 }

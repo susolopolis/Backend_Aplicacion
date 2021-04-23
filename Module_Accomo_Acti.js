@@ -1,12 +1,22 @@
+
+/**
+ * @apiName Modulo de Obtencion de Alojamiento y Actividades
+ * Modulo para Obtención del alojamiento y las actividades del Paquete.
+ *
+ * Este modulo se encargará de obtener las distintas opciones de alojamiento disponibles para el destino, asi
+ * como de las distintas actividades asociadas al mismo
+ * @Author Jesus Navarro Hernandez
+ * @date 23/04/2021
+ */
 const http = require("https");
 
-var resultado_id;
-var resultado_hoteles;
-var place_to_search;
+var resultado_id; //!< Variable para almacenar el resultado de la peticion de cara a obtener el ID del lugar
+var resultado_hoteles; //!< Variable para almacenar el resultado final del alojamiento
+var place_to_search; //!< Variable para almacenar el lugar de destino
 
 
-var interest =[];
-var hotel = {
+var interest =[];//!< Variable para almacenar el resultado de las actividades
+var hotel = {   //!< Variable para almacenar la informacion obtenida de la peticion por cada alojamiento
     id : String,
     name : String,
     Star_rating : String,
@@ -15,6 +25,12 @@ var hotel = {
     scale : String,
     current_price : String
 }
+
+/**
+ * @brief Funcion para obtener el ID necesario de un lugar
+ * @param place lugar cuyo ID deseamos obtener
+ * @return resultado_id Identificador usado por la API asociado el lugar, si existe.
+ */
 
 function initiate_ids(place){
     place_to_search = place;
@@ -29,6 +45,16 @@ function initiate_ids(place){
             "useQueryString": true
         }
     };
+
+    /**
+     * Comenzamos definiendo la variable options que contiene la informacion necesaria para la peticion
+     * */
+
+
+    /**
+     * @brief Funcion que devuelve la promesa con el ID resuelto
+     * @return get_place_id().place_id Identificador obtenido.
+     */
 
     function promesa_id() {
         return new Promise((resolve, reject) => {
@@ -53,24 +79,42 @@ function initiate_ids(place){
             }
         });
     }
+    /**
+     * @brief Funcion que devuelve el path para la peticion en funcion del lugar
+     *  @return path Direccion para realizar la peticion.
+     */
 
     function get_place() {
         var path = "/v1/destinations/search?locale=en_US&currency=USD&query=";
-        if((place_to_search == undefined)||(typeof place_to_search != "string")){
-            throw "Error:place_to_search is not defined!"
+        /**
+         * Comprobamos que las variables necesarias estan correctamente inicializadas
+         * */
+        try {
+            check_variable(place_to_search)
+        }catch (error){
+            throw error;
         }
-        else {
-            path += place_to_search;
-        }
+        path += place_to_search;
         return path;
     }
 
+    /**
+     * @brief Funcion para obtener las actividades relacionadas con el destino, almacenandolas en la variable interest
+     */
+
     function get_intersting_places() {
-        var global_stop = false;
+        var global_stop = false;//!< Variable para establecer una de las condiciones de parada
+        /**
+         * Iteramos sobre el resultado_id, con la condicion de que no se haya alcanzado el final ni que se haya establecido
+         * la variable global_stop a true
+         * */
         for (var i = 0; (i < resultado_id.length)&&(global_stop == false); i++) {
             if (resultado_id[i] == "\"") {
-                var partial = "";
+                var partial = "";//!< Variable para almacenar los valores de los campos parciales
                 var j = i + 1;
+                /**
+                 * Almacenamos en partial el campo obtenido
+                 * */
                 while ((resultado_id[j] != "\"") && (j < resultado_id.length)) {
                     partial += resultado_id[j];
                     j++;
@@ -78,18 +122,31 @@ function initiate_ids(place){
                 var latitude = "";
                 var longitude = "";
                 var name ="";
+
                 stop = false;
                 j++;
+                /**
+                 * Si alcanzamos LANDMARK_GROUP, hemos alcanzado el subgrupo donde se encuentran las actividades
+                 * */
                 if (partial == "LANDMARK_GROUP") {
+                    /**
+                     * Deberemos iterar hasta alcanzar el subgrupo TRANSPORT_GROUP
+                     * */
                     while (partial != "TRANSPORT_GROUP") {
                         j++;
-                        var stop = false;
+                        var stop = false;//!< Variable para controlar la iteracion de j
+                        /**
+                         * Iteramos de nuevo sobre resultado_id, almacenando en partial el campo, hasta que stop sea true tras haber guardado todos los campos
+                         * */
                         while ((j < resultado_id.length) && (stop == false)) {
                             partial ="";
                             while ((resultado_id[j] != "\"") && (j < resultado_id.length)) {
                                 partial += resultado_id[j];
                                 j++;
                             }
+                            /**
+                             * Comprobamos si se trata de alguno de los campos: name, latitude o longitude
+                             * */
                             switch (partial) {
                                 case "name":
                                     j = j + 3;
@@ -119,6 +176,9 @@ function initiate_ids(place){
                                     }
                                     longitude = aux;
                                     break;
+                                /**
+                                 * Cuando alcanzemos TRANSPORT_GROUP significa que ya acabado, por lo que finalizamos ambos bucles
+                                 * */
                                 case "TRANSPORT_GROUP":
                                     stop = true;
                                     global_stop = true;
@@ -126,6 +186,9 @@ function initiate_ids(place){
                             }
                             j++;
                         }
+                        /**
+                         * Usamos la variable aux para almacenar la informacion obtenida y la guardamos en el vector interest.
+                         * */
                         var aux = {
                             name: name,
                             latitude: latitude,
@@ -141,11 +204,22 @@ function initiate_ids(place){
         }
     }
 
+    /**
+     * @brief Funcion para obtener el identificador del destino
+     * @return place_id identificador del lugar
+     */
+
     function get_place_id() {
         for (var i = 0; i < resultado_id.length; i++) {
+            /**
+             * A partir del ", comenzamos a almacenar el campo
+             * */
             if (resultado_id[i] == "\"") {
                 var partial = "";
                 var j = i + 1;
+                /**
+                 * Almacenamos la informacion en partial
+                 * */
                 while ((resultado_id[j] != "\"") && (j < resultado_id.length)) {
                     partial += resultado_id[j];
                     j++;
@@ -153,6 +227,9 @@ function initiate_ids(place){
                 var place_id = "";
                 var place_name = "";
 
+                /**
+                 * Si partial vale destinationId, iteraremos a partir de ahi para obtener el id.
+                 * */
                 if (partial == "destinationId") {
                     j = j + 3;
                     while (resultado_id[j] != "\"") {
@@ -160,6 +237,9 @@ function initiate_ids(place){
                         ++j;
                     }
                     j = j+3;
+                    /**
+                     * Si partial no vale name, seguimos leyendo y almacenando en partial. Debemos comprobar que el lugar se corresponde con el de la busqueda
+                     * */
                     while (partial != "name") {
                         partial ="";
                         while ((resultado_id[j] != "\"") && (j < resultado_id.length)) {
@@ -169,11 +249,16 @@ function initiate_ids(place){
                         j = j+1;
                     }
                     j = j+2;
+                    /**
+                     * Finalmente, guardamos en place_name el nombre del lugar
+                     * */
                     while (resultado_id[j] != "\""){
                         place_name += resultado_id[j];
                         j++;
                     }
-
+                    /**
+                     * Si el nombre coincide con el lugar de la busqueda, devolvemos el ID.
+                     * */
                     if (place_name == place_to_search) {
                         return place_id;
                     }
@@ -183,7 +268,10 @@ function initiate_ids(place){
         }
     }
     return get_res();
-
+    /**
+     * @brief Funcion que llama a la promesa y obtiene el ID
+     * @return resultado_id identificador del lugar
+     */
     async function get_res() {
         resultado_id = await promesa_id();
         return resultado_id;
@@ -194,6 +282,17 @@ function initiate_ids(place){
 //////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
+
+/**
+ * @brief Funcion para obtener los alojamientos en el destino
+ * @param adults Numero de adultos
+ * @param ci   Fecha de llegada
+ * @param co   Fecha de salida
+ * @param dest_id   Identificador del lugar
+ * @param sort_order Ordenacion para la peticion
+ * @return hoteles Lista de alojamientos.
+ */
+
 function initiate_hotel(adults,ci,co,dest_id,sort_order){
     const options = {
         "method": "GET",
@@ -207,6 +306,15 @@ function initiate_hotel(adults,ci,co,dest_id,sort_order){
         }
     };
 
+    /**
+     * Comenzamos definiendo la variable options que contiene la informacion necesaria para la peticion
+     * */
+
+
+    /**
+     * @brief Funcion que devuelve la promesa con la informacion del alojamiento
+     * @return get_hotels_info().hoteles Lista de alojamientos
+     */
     function promesa_hotel() {
         return new Promise((resolve, reject) => {
             try {
@@ -229,49 +337,70 @@ function initiate_hotel(adults,ci,co,dest_id,sort_order){
             }
         });
     }
+
+    /**
+     * @brief Funcion que devuelve el path para la peticion
+     * @return path Path.
+     */
+
     function get_place() {
         var path = "/v1/hotels/search?adults_number="
 
-        if((adults == undefined) ||(typeof adults != "number")){
-            throw "Error: adults is not properly defined!"
-        }
-        if((ci == undefined) ||(typeof ci != "string")){
-            throw "Error: ci is not properly defined!"
-        }
-        if((co == undefined) ||(typeof co != "string")){
-            throw "Error: co is not properly defined!"
-        }
-        if((dest_id == undefined) ||(typeof dest_id != "string")){
-            throw "Error: dest_id is not properly defined!"
-        }
-        if((sort_order == undefined) ||(typeof sort_order != "string")){
-            throw "Error: sort_order is not properly defined!"
+        /**
+         * Comprobamos que las variables necesarias estan correctamente inicializadas
+         * */
+
+        try {
+            check_adults(adults)
+            check_variable(ci)
+            check_variable(co)
+            check_variable(dest_id)
+            check_variable(sort_order)
+        }catch (error){
+            throw error;
         }
 
         path += adults +"&checkin_date="+ci+"&destination_id="+dest_id+"&checkout_date="+co+"&currency=USD&locale=en_US&sort_order="+sort_order;
         return path;
     }
 
+    /**
+     * @brief Funcion que obtiene la informacion de los alojamientos del resultado de la peticion
+     * @return hoteles Lista de alojamientos
+     */
+
     function get_hotels_info() {
         for (var i = 0; i < resultado_hoteles.length; i++) {
             if (resultado_hoteles[i] == "\"") {
                 var partial = "";
                 var j = i + 1;
+                /**
+                 * Almacenamos en partial hasta alcanzar ", signo de finalizacion del campo
+                 * */
                 while ((resultado_hoteles[j] != "\"") && (j < resultado_hoteles.length)) {
                     partial += resultado_hoteles[j];
                     j++;
                 }
+                /**
+                 * Comprobamos si partial es igual a results
+                 * */
                 if (partial == "results") {
                     let hoteles =[];
                     for (var i = 0; i < resultado_hoteles.length; i++) {
                         partial = "";
                         j = j + 5;
                         var stop = false;
+                        /**
+                         * Vamos a iterar hasta haber leido toda la informacion de la opcion de alojamiento
+                         * */
                         while (stop != true) {
                             while ((resultado_hoteles[j] != "\"") && (j < resultado_hoteles.length)) {
                                 partial += resultado_hoteles[j];
                                 j++;
                             }
+                            /**
+                             * Comprobamos si el valor de partial es igual a alguno de los campos del alojamiento
+                             * */
                             switch (partial) {
                                 case "name" :
                                     j = j + 3;
@@ -344,6 +473,9 @@ function initiate_hotel(adults,ci,co,dest_id,sort_order){
                                 stop=true;
                             }
                         }
+                        /**
+                         * Almacenamos la informacion obtenida en la variable aux y la introducimos en hoteles.
+                         * */
                         var aux = {
                             id : hotel.id,
                             name : hotel.name,
@@ -363,12 +495,17 @@ function initiate_hotel(adults,ci,co,dest_id,sort_order){
         }
     }
     return get_hot();
-
+    /**
+     * @brief Funcion que llama a la promesa y obtiene los alojamientos
+     * @return hoteles resultado de la promesa
+     */
     async function get_hot() {
         return await promesa_hotel();
     }
 }
-
+/**
+ * @brief Funcion que llama a los metodos anteriores para obtener el ID del lugar para, a continuacion, obtener el listado de alojamientos
+ */
 exports.get_acco_pack = async (place,adults,ci,co) => {
     try {
         var id_destiny = await initiate_ids(place);
@@ -377,16 +514,41 @@ exports.get_acco_pack = async (place,adults,ci,co) => {
         throw error;
     }
 }
-
+/**
+ * @brief Funcion que devuelve el listado de los alojamientos
+ * @return resultado_hoteles listado de alojamientos
+ */
 exports.get_hotels =  () =>{
     return resultado_hoteles;
 }
-
+/**
+ * @brief Funcion que devuelve el listado de lugares de interes
+ * @return interest listado de lugares de interes
+ */
 exports.get_interest =  () =>{
     return interest;
 }
 
-
-
-
+/**
+ * @brief Funcion que analiza si las variable pasada tiene un valor definido del tipo string
+ */
+function check_variable(variable){
+    if(variable==undefined) {
+        throw "Error: " +variable+" is not properly defined!"
+    }
+    if(typeof variable !="string"){
+        throw "Error: the variable " +variable +" type is " +typeof variable + " ,not a String!"
+    }
+}
+/**
+ * @brief Funcion que comprueba que la variable adults esta bien definida con un valor del tipo number
+ */
+function check_adults(variable){
+    if(variable==undefined) {
+        throw "Error: " +variable+" is not properly defined!"
+    }
+    if(typeof variable !="number"){
+        throw "Error: the variable " +variable +" type is " +typeof variable + " ,not a String!"
+    }
+}
 
