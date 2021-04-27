@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: Module_Accomo_Acti.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: Module_Accomo_Acti.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>
+/**
+ * @apiName Modulo de Obtencion de Alojamiento y Actividades
+ * Modulo para Obtención del alojamiento y las actividades del Paquete.
+ *
+ * Este modulo se encargará de obtener las distintas opciones de alojamiento disponibles para el destino, asi
+ * como de las distintas actividades asociadas al mismo
+ * @Author Jesus Navarro Hernandez
+ * @date 23/04/2021
+ */
+const http = require("https");
+
+var resultado_id; //!&lt; Variable para almacenar el resultado de la peticion de cara a obtener el ID del lugar
+var resultado_hoteles; //!&lt; Variable para almacenar el resultado final del alojamiento
+var place_to_search; //!&lt; Variable para almacenar el lugar de destino
+
+
+var interest =[];//!&lt; Variable para almacenar el resultado de las actividades
+var hotel = {   //!&lt; Variable para almacenar la informacion obtenida de la peticion por cada alojamiento
+    id : String,
+    name : String,
+    Star_rating : String,
+    address : String,
+    guest_rating : String,
+    scale : String,
+    current_price : String
+}
+
+/**
+ * @brief Funcion para obtener el ID necesario de un lugar
+ * @param place lugar cuyo ID deseamos obtener
+ * @return resultado_id Identificador usado por la API asociado el lugar, si existe.
+ */
+
+function initiate_ids(place){
+    place_to_search = place;
+    const options = {
+        "method": "GET",
+        "hostname": "hotels-com-provider.p.rapidapi.com",
+        "port": null,
+        "path": get_place(),
+        "headers": {
+            "x-rapidapi-key": "858da3dc02msh1e03a336bf83c0dp1a68e9jsn98e3930b0422",
+            "x-rapidapi-host": "hotels-com-provider.p.rapidapi.com",
+            "useQueryString": true
+        }
+    };
+
+    /**
+     * Comenzamos definiendo la variable options que contiene la informacion necesaria para la peticion
+     * */
+
+
+    /**
+     * @brief Funcion que devuelve la promesa con el ID resuelto
+     * @return get_place_id().place_id Identificador obtenido.
+     */
+
+    function promesa_id() {
+        return new Promise((resolve, reject) => {
+            try {
+                const req = http.request(options, function (res) {
+                    const chunks = [];
+
+                    res.on("data", function (chunk) {
+                        chunks.push(chunk);
+                    });
+
+                    res.on("end", function () {
+                        const body = Buffer.concat(chunks);
+                        resultado_id = body.toString();
+                        get_intersting_places();
+                        resolve(get_place_id());
+                    });
+                });
+                req.end();
+            }catch (error){
+                throw error;
+            }
+        });
+    }
+    /**
+     * @brief Funcion que devuelve el path para la peticion en funcion del lugar
+     *  @return path Direccion para realizar la peticion.
+     */
+
+    function get_place() {
+        var path = "/v1/destinations/search?locale=en_US&amp;currency=USD&amp;query=";
+        /**
+         * Comprobamos que las variables necesarias estan correctamente inicializadas
+         * */
+        try {
+            check_variable(place_to_search)
+        }catch (error){
+            throw error;
+        }
+        path += place_to_search;
+        return path;
+    }
+
+    /**
+     * @brief Funcion para obtener las actividades relacionadas con el destino, almacenandolas en la variable interest
+     */
+
+    function get_intersting_places() {
+        var global_stop = false;//!&lt; Variable para establecer una de las condiciones de parada
+        /**
+         * Iteramos sobre el resultado_id, con la condicion de que no se haya alcanzado el final ni que se haya establecido
+         * la variable global_stop a true
+         * */
+        for (var i = 0; (i &lt; resultado_id.length)&amp;&amp;(global_stop == false); i++) {
+            if (resultado_id[i] == "\"") {
+                var partial = "";//!&lt; Variable para almacenar los valores de los campos parciales
+                var j = i + 1;
+                /**
+                 * Almacenamos en partial el campo obtenido
+                 * */
+                while ((resultado_id[j] != "\"") &amp;&amp; (j &lt; resultado_id.length)) {
+                    partial += resultado_id[j];
+                    j++;
+                }
+                var latitude = "";
+                var longitude = "";
+                var name ="";
+
+                stop = false;
+                j++;
+                /**
+                 * Si alcanzamos LANDMARK_GROUP, hemos alcanzado el subgrupo donde se encuentran las actividades
+                 * */
+                if (partial == "LANDMARK_GROUP") {
+                    /**
+                     * Deberemos iterar hasta alcanzar el subgrupo TRANSPORT_GROUP
+                     * */
+                    while (partial != "TRANSPORT_GROUP") {
+                        j++;
+                        var stop = false;//!&lt; Variable para controlar la iteracion de j
+                        /**
+                         * Iteramos de nuevo sobre resultado_id, almacenando en partial el campo, hasta que stop sea true tras haber guardado todos los campos
+                         * */
+                        while ((j &lt; resultado_id.length) &amp;&amp; (stop == false)) {
+                            partial ="";
+                            while ((resultado_id[j] != "\"") &amp;&amp; (j &lt; resultado_id.length)) {
+                                partial += resultado_id[j];
+                                j++;
+                            }
+                            /**
+                             * Comprobamos si se trata de alguno de los campos: name, latitude o longitude
+                             * */
+                            switch (partial) {
+                                case "name":
+                                    j = j + 3;
+                                    var aux = "";
+                                    while (resultado_id[j] != "\"") {
+                                        aux += resultado_id[j];
+                                        ++j;
+                                    }
+                                    name = aux;
+                                    stop = true;
+                                    break;
+                                case "latitude":
+                                    j = j + 2;
+                                    var aux = "";
+                                    while (resultado_id[j] != ",") {
+                                        aux += resultado_id[j];
+                                        ++j;
+                                    }
+                                    latitude = aux;
+                                    break;
+                                case "longitude":
+                                    j = j + 2;
+                                    var aux = "";
+                                    while (resultado_id[j] != "\"") {
+                                        aux += resultado_id[j];
+                                        ++j;
+                                    }
+                                    longitude = aux;
+                                    break;
+                                /**
+                                 * Cuando alcanzemos TRANSPORT_GROUP significa que ya acabado, por lo que finalizamos ambos bucles
+                                 * */
+                                case "TRANSPORT_GROUP":
+                                    stop = true;
+                                    global_stop = true;
+                                    break;
+                            }
+                            j++;
+                        }
+                        /**
+                         * Usamos la variable aux para almacenar la informacion obtenida y la guardamos en el vector interest.
+                         * */
+                        var aux = {
+                            name: name,
+                            latitude: latitude,
+                            longitude: longitude
+                        }
+
+                        if(global_stop != true) {
+                            interest.push(aux);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * @brief Funcion para obtener el identificador del destino
+     * @return place_id identificador del lugar
+     */
+
+    function get_place_id() {
+        for (var i = 0; i &lt; resultado_id.length; i++) {
+            /**
+             * A partir del ", comenzamos a almacenar el campo
+             * */
+            if (resultado_id[i] == "\"") {
+                var partial = "";
+                var j = i + 1;
+                /**
+                 * Almacenamos la informacion en partial
+                 * */
+                while ((resultado_id[j] != "\"") &amp;&amp; (j &lt; resultado_id.length)) {
+                    partial += resultado_id[j];
+                    j++;
+                }
+                var place_id = "";
+                var place_name = "";
+
+                /**
+                 * Si partial vale destinationId, iteraremos a partir de ahi para obtener el id.
+                 * */
+                if (partial == "destinationId") {
+                    j = j + 3;
+                    while (resultado_id[j] != "\"") {
+                        place_id += resultado_id[j];
+                        ++j;
+                    }
+                    j = j+3;
+                    /**
+                     * Si partial no vale name, seguimos leyendo y almacenando en partial. Debemos comprobar que el lugar se corresponde con el de la busqueda
+                     * */
+                    while (partial != "name") {
+                        partial ="";
+                        while ((resultado_id[j] != "\"") &amp;&amp; (j &lt; resultado_id.length)) {
+                            partial += resultado_id[j];
+                            j++;
+                        }
+                        j = j+1;
+                    }
+                    j = j+2;
+                    /**
+                     * Finalmente, guardamos en place_name el nombre del lugar
+                     * */
+                    while (resultado_id[j] != "\""){
+                        place_name += resultado_id[j];
+                        j++;
+                    }
+                    /**
+                     * Si el nombre coincide con el lugar de la busqueda, devolvemos el ID.
+                     * */
+                    if (place_name == place_to_search) {
+                        return place_id;
+                    }
+                }
+                i = j;
+            }
+        }
+    }
+    return get_res();
+    /**
+     * @brief Funcion que llama a la promesa y obtiene el ID
+     * @return resultado_id identificador del lugar
+     */
+    async function get_res() {
+        resultado_id = await promesa_id();
+        return resultado_id;
+    }
+}
+
+////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
+
+/**
+ * @brief Funcion para obtener los alojamientos en el destino
+ * @param adults Numero de adultos
+ * @param ci   Fecha de llegada
+ * @param co   Fecha de salida
+ * @param dest_id   Identificador del lugar
+ * @param sort_order Ordenacion para la peticion
+ * @return hoteles Lista de alojamientos.
+ */
+
+function initiate_hotel(adults,ci,co,dest_id,sort_order){
+    const options = {
+        "method": "GET",
+        "hostname": "hotels-com-provider.p.rapidapi.com",
+        "port": null,
+        "path": get_place(),
+        "headers": {
+            "x-rapidapi-key": "858da3dc02msh1e03a336bf83c0dp1a68e9jsn98e3930b0422",
+            "x-rapidapi-host": "hotels-com-provider.p.rapidapi.com",
+            "useQueryString": true
+        }
+    };
+
+    /**
+     * Comenzamos definiendo la variable options que contiene la informacion necesaria para la peticion
+     * */
+
+
+    /**
+     * @brief Funcion que devuelve la promesa con la informacion del alojamiento
+     * @return get_hotels_info().hoteles Lista de alojamientos
+     */
+    function promesa_hotel() {
+        return new Promise((resolve, reject) => {
+            try {
+                const req = http.request(options, function (res) {
+                    const chunks = [];
+
+                    res.on("data", function (chunk) {
+                        chunks.push(chunk);
+                    });
+
+                    res.on("end", function () {
+                        const body = Buffer.concat(chunks);
+                        resultado_hoteles = body.toString();
+                        resolve(get_hotels_info());
+                    });
+                });
+                req.end();
+            }catch (error){
+                throw error;
+            }
+        });
+    }
+
+    /**
+     * @brief Funcion que devuelve el path para la peticion
+     * @return path Path.
+     */
+
+    function get_place() {
+        var path = "/v1/hotels/search?adults_number="
+
+        /**
+         * Comprobamos que las variables necesarias estan correctamente inicializadas
+         * */
+
+        try {
+            check_adults(adults)
+            check_variable(ci)
+            check_variable(co)
+            check_variable(dest_id)
+            check_variable(sort_order)
+        }catch (error){
+            throw error;
+        }
+
+        path += adults +"&amp;checkin_date="+ci+"&amp;destination_id="+dest_id+"&amp;checkout_date="+co+"&amp;currency=USD&amp;locale=en_US&amp;sort_order="+sort_order;
+        return path;
+    }
+
+    /**
+     * @brief Funcion que obtiene la informacion de los alojamientos del resultado de la peticion
+     * @return hoteles Lista de alojamientos
+     */
+
+    function get_hotels_info() {
+        for (var i = 0; i &lt; resultado_hoteles.length; i++) {
+            if (resultado_hoteles[i] == "\"") {
+                var partial = "";
+                var j = i + 1;
+                /**
+                 * Almacenamos en partial hasta alcanzar ", signo de finalizacion del campo
+                 * */
+                while ((resultado_hoteles[j] != "\"") &amp;&amp; (j &lt; resultado_hoteles.length)) {
+                    partial += resultado_hoteles[j];
+                    j++;
+                }
+                /**
+                 * Comprobamos si partial es igual a results
+                 * */
+                if (partial == "results") {
+                    let hoteles =[];
+                    for (var i = 0; i &lt; resultado_hoteles.length; i++) {
+                        partial = "";
+                        j = j + 5;
+                        var stop = false;
+                        /**
+                         * Vamos a iterar hasta haber leido toda la informacion de la opcion de alojamiento
+                         * */
+                        while (stop != true) {
+                            while ((resultado_hoteles[j] != "\"") &amp;&amp; (j &lt; resultado_hoteles.length)) {
+                                partial += resultado_hoteles[j];
+                                j++;
+                            }
+                            /**
+                             * Comprobamos si el valor de partial es igual a alguno de los campos del alojamiento
+                             * */
+                            switch (partial) {
+                                case "name" :
+                                    j = j + 3;
+                                    var aux = "";
+                                    while (resultado_hoteles[j] != "\"") {
+                                        aux += resultado_hoteles[j];
+                                        ++j;
+                                    }
+                                    hotel.name = aux;
+                                    break;
+                                case "starRating" :
+                                    j = j + 2;
+                                    var aux = "";
+                                    while (resultado_hoteles[j] != "\,") {
+                                        aux += resultado_hoteles[j];
+                                        ++j;
+                                    }
+                                    hotel.Star_rating = aux;
+                                    break;
+                                case "id" :
+                                    j = j + 2;
+                                    var aux = "";
+                                    while (resultado_hoteles[j] != ",") {
+                                        aux += resultado_hoteles[j];
+                                        ++j;
+                                    }
+                                    hotel.id = aux;
+                                    break;
+                                case "streetAddress":
+                                    j = j + 3;
+                                    var aux = "";
+                                    while (resultado_hoteles[j] != "\"") {
+                                        aux += resultado_hoteles[j];
+                                        ++j;
+                                    }
+                                    hotel.address = aux;
+                                    break;
+                                case "rating" :
+                                    j = j + 3;
+                                    var aux = "";
+                                    while (resultado_hoteles[j] != "\"") {
+                                        aux += resultado_hoteles[j];
+                                        ++j;
+                                    }
+                                    hotel.guest_rating = aux;
+                                    break;
+                                case "scale":
+                                    j = j + 2;
+                                    var aux = "";
+                                    while (resultado_hoteles[j] != ",") {
+                                        aux += resultado_hoteles[j];
+                                        ++j;
+                                    }
+                                    hotel.scale = aux;
+                                    break;
+                                case "current" :
+                                    j = j + 3;
+                                    var aux = "";
+                                    while (resultado_hoteles[j] != "\"") {
+                                        aux += resultado_hoteles[j];
+                                        ++j;
+                                    }
+                                    hotel.current_price = aux;
+                                    stop = true;
+                                    break;
+                            }
+                            partial = "";
+                            j++;
+                            if (j >= resultado_hoteles.length){
+                                stop=true;
+                            }
+                        }
+                        /**
+                         * Almacenamos la informacion obtenida en la variable aux y la introducimos en hoteles.
+                         * */
+                        var aux = {
+                            id : hotel.id,
+                            name : hotel.name,
+                            Star_rating : hotel.Star_rating,
+                            address : hotel.address,
+                            guest_rating : hotel.guest_rating,
+                            scale : hotel.scale,
+                            current_price : hotel.current_price};
+
+                        hoteles.push(aux);
+                        i = j;
+                        //console.log(aux)
+                    }
+                    return hoteles;
+                }
+            }
+        }
+    }
+    return get_hot();
+    /**
+     * @brief Funcion que llama a la promesa y obtiene los alojamientos
+     * @return hoteles resultado de la promesa
+     */
+    async function get_hot() {
+        return await promesa_hotel();
+    }
+}
+/**
+ * @brief Funcion que llama a los metodos anteriores para obtener el ID del lugar para, a continuacion, obtener el listado de alojamientos
+ */
+exports.get_acco_pack = async (place,adults,ci,co) => {
+    try {
+        var id_destiny = await initiate_ids(place);
+        resultado_hoteles = await initiate_hotel(adults, ci, co, id_destiny, "GUEST_RATING");
+    }catch (error){
+        throw error;
+    }
+}
+/**
+ * @brief Funcion que devuelve el listado de los alojamientos
+ * @return resultado_hoteles listado de alojamientos
+ */
+exports.get_hotels =  () =>{
+    return resultado_hoteles;
+}
+/**
+ * @brief Funcion que devuelve el listado de lugares de interes
+ * @return interest listado de lugares de interes
+ */
+exports.get_interest =  () =>{
+    return interest;
+}
+
+/**
+ * @brief Funcion que analiza si las variable pasada tiene un valor definido del tipo string
+ */
+function check_variable(variable){
+    if(variable==undefined) {
+        throw "Error: " +variable+" is not properly defined!"
+    }
+    if(typeof variable !="string"){
+        throw "Error: the variable " +variable +" type is " +typeof variable + " ,not a String!"
+    }
+}
+/**
+ * @brief Funcion que comprueba que la variable adults esta bien definida con un valor del tipo number
+ */
+function check_adults(variable){
+    if(variable==undefined) {
+        throw "Error: " +variable+" is not properly defined!"
+    }
+    if(typeof variable !="number"){
+        throw "Error: the variable " +variable +" type is " +typeof variable + " ,not a String!"
+    }
+}
+
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#check_adults">check_adults</a></li><li><a href="global.html#check_variable">check_variable</a></li><li><a href="global.html#get_acco_pack">get_acco_pack</a></li><li><a href="global.html#get_hotels">get_hotels</a></li><li><a href="global.html#get_interest">get_interest</a></li><li><a href="global.html#http">http</a></li><li><a href="global.html#initiate_hotel">initiate_hotel</a></li><li><a href="global.html#initiate_ids">initiate_ids</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Fri Apr 23 2021 16:15:35 GMT+0000 (hora del meridiano de Greenwich)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
