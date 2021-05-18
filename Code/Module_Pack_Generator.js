@@ -22,8 +22,8 @@ var packs = []; //!< Variable para almacenar los paquetes creados
 var origin ="London"; //!< Variable que contiene el origen
 var destiny="Madrid"; //!< Variable que contiene el destino
 var adults=1;//!< Variable que contiene el numero de adultos
-var check_in_date="2021-05-10"; //!< Variable que contiene la fecha de llegada
-var check_out_date="2021-05-15";//!< Variable que contiene la fecha de salida
+var check_in_date="2021-05-20"; //!< Variable que contiene la fecha de llegada
+var check_out_date="2021-05-25";//!< Variable que contiene la fecha de salida
 
 //*************************************************************
 //*************************************************************
@@ -105,9 +105,7 @@ exports.main = async () =>{
     //create_user();
     //erase_user(4);
     await get_module_acco_acti_info();
-    //save_pack(packs[3]);
-    //show_packs();
-    console.log(packs[2]);
+    return packs;
     //modulo_tabla.show_packs();
     //compare_pack_table()
     //show_transport()

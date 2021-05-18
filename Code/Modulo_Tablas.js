@@ -104,6 +104,23 @@ exports.erase_activity = (ID) =>{
 //*************************************************************
 //*************************************************************
 
+exports.log_in = async (Username,Password) =>{
+    try{
+        const persona = Personas.findAll({
+            where: {
+                username: Username,
+                password: Password
+            },
+            force:true
+        })
+    }catch (error){
+        console.log(error);
+    }
+    if(persona != undefined){
+        return persona;
+    }
+}
+
 /**
  * @brief Funcion para crear un usuario (aun con datos de ejemplo)
  */
